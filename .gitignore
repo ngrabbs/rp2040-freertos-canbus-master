@@ -1,0 +1,25 @@
+# Ignore build output
+/build/
+*.elf
+*.uf2
+*.bin
+*.hex
+*.map
+
+# Ignore SDK or external libraries
+/lib/
+!lib/FreeRTOS-Kernel
+*.a
+
+# Ignore CMake generated files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Ignore backups, logs, or editor junk
+*.swp
+*.log
+*.DS_Store
+*.vscode/
+.idea/

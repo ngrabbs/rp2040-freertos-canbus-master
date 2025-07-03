@@ -1,0 +1,3 @@
+[submodule "lib/Adafruit_MCP2515"]
+	path = lib/Adafruit_MCP2515
+	url = https://github.com/adafruit/Adafruit_MCP2515.git
