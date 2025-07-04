@@ -5,6 +5,27 @@
 #include <string.h>
 #include <stdlib.h>
 
+int read_int_with_echo(const char *prompt);
+
+int read_int_with_echo(const char *prompt) {
+    char buffer[16] = {0};
+    int idx = 0;
+    printf("%s", prompt);
+    while (1) {
+        int c = getchar();
+        if (c == '\r' || c == '\n') {
+            printf("\n");
+            buffer[idx] = '\0';
+            break;
+        }
+        if (idx < (sizeof(buffer)-1) && c >= 32 && c <= 126) {
+            buffer[idx++] = (char)c;
+            putchar(c);
+        }
+    }
+    return atoi(buffer);
+}
+
 // Default parameters for spaceCAN frame - SX1280
 uint8_t default_power_dbm_sx1280 = 10;
 uint8_t default_modulation_reg_sx1280 = 0x01;  // LoRa
@@ -108,19 +129,16 @@ void cli_task(void *params)
             uint16_t freq_mhz = (c == '2') ? 2250 : 915;
 
             if (c == '4') {
-                printf("Enter frequency in MHz (e.g. 915): ");
-                scanf("%hu", &freq_mhz);
+                freq_mhz = (uint16_t)read_int_with_echo("Enter frequency in MHz (e.g. 915): ");
             }
 
-            printf("Enter power in dBm (%s): ", (c == '2') ? "0-13" : "2-17");
-            scanf("%d", &power_dbm);
+            power_dbm = read_int_with_echo("Enter power in dBm: ");
 
             printf("Select modulation:\n");
             printf("1. LoRa (0x01)\n");
             printf("2. FLRC (0x03)\n");
             printf("3. GFSK (0x00)\n");
-            printf("Selection: ");
-            scanf("%d", &modulation);
+            modulation = read_int_with_echo("Selection: ");
             uint8_t modulation_reg = 0x01;
             if (modulation == 2) modulation_reg = 0x03;
             else if (modulation == 3) modulation_reg = 0x00;
@@ -131,8 +149,7 @@ void cli_task(void *params)
                 printf("2. 400 kHz (0x26)\n");
                 printf("3. 800 kHz (0x18)\n");
                 printf("4. 1600 kHz (0x0A)\n");
-                printf("Selection: ");
-                scanf("%d", &bw);
+                bw = read_int_with_echo("Selection: ");
             } else {
                 printf("Select RFM9x bandwidth:\n");
                 printf("1. 7.8 kHz (0x00)\n");
@@ -140,8 +157,7 @@ void cli_task(void *params)
                 printf("3. 125 kHz (0x07)\n");
                 printf("4. 250 kHz (0x08)\n");
                 printf("5. 500 kHz (0x09)\n");
-                printf("Selection: ");
-                scanf("%d", &bw);
+                bw = read_int_with_echo("Selection: ");
             }
 
             uint8_t bw_reg = (c == '2') ? 0x26 : 0x07;
@@ -165,8 +181,7 @@ void cli_task(void *params)
             printf("6. SF10 (0xA0)\n");
             printf("7. SF11 (0xB0)\n");
             printf("8. SF12 (0xC0)\n");
-            printf("Selection: ");
-            scanf("%d", &sf);
+            sf = read_int_with_echo("Selection: ");
             uint8_t sf_reg = 0x70;
             sf_reg = 0x40 + (sf * 0x10);
 
@@ -175,8 +190,7 @@ void cli_task(void *params)
             printf("2. 4/6 (0x02)\n");
             printf("3. 4/7 (0x03)\n");
             printf("4. 4/8 (0x04)\n");
-            printf("Selection: ");
-            scanf("%d", &cr);
+            cr = read_int_with_echo("Selection: ");
             uint8_t cr_reg = (uint8_t)cr;
 
             if (c == '2') {

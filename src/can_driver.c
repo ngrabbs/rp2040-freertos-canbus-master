@@ -5,6 +5,7 @@
 #include "can_driver.h"
 #include <stdbool.h>
 #include <stdio.h>
+#include "debug.h"
 
 static inline void cs_select() {
     gpio_put(MCP2515_CS, 0);
@@ -45,7 +46,7 @@ void can_init(void) {
     spi_write_read_blocking(SPI_PORT, read_cmd, resp, 3);
     cs_deselect();
 
-    printf("REG_CANCTRL read-back = 0x%02X\n", resp[2]);
+    DEBUG_PRINT("REG_CANCTRL read-back = 0x%02X\n", resp[2]);
 
     sleep_ms(2);
 
@@ -89,13 +90,13 @@ uint8_t rx[3] = {0};
 spi_write_read_blocking(SPI_PORT, tx, rx, 3);
 cs_deselect();
 
-printf("CANSTAT = 0x%02X\n", rx[2]);
+DEBUG_PRINT("CANSTAT = 0x%02X\n", rx[2]);
 }
 void can_send(const can_frame_t* frame) {
-    printf("entered can_send()\n");
-    printf("preparing to execute cs_select()\n");
+    DEBUG_PRINT("entered can_send()\n");
+    DEBUG_PRINT("preparing to execute cs_select()\n");
     cs_select();
-    printf("executed cs_select()\n");
+    DEBUG_PRINT("executed cs_select()\n");
 
     uint8_t buf[14] = {0};
     buf[0] = 0x40; // LOAD TX BUFFER instruction (TXB0)
@@ -109,12 +110,12 @@ void can_send(const can_frame_t* frame) {
         buf[6 + i] = frame->data[i];
     }
 
-    printf("preparing to run spi_write_blocking()\n");
+    DEBUG_PRINT("preparing to run spi_write_blocking()\n");
     spi_write_blocking(SPI_PORT, buf, 6 + frame->dlc);
-    printf("executed spi_write_blocking()\n");
-    printf("preparing to cs_deselect()\n");
+    DEBUG_PRINT("executed spi_write_blocking()\n");
+    DEBUG_PRINT("preparing to cs_deselect()\n");
     cs_deselect();
-    printf("executed cs_deselect()\n");
+    DEBUG_PRINT("executed cs_deselect()\n");
 
     // Request to send TXB0
     cs_select();
@@ -133,7 +134,7 @@ bool can_receive(can_frame_t* frame) {
     cs_deselect();
 
     uint8_t canintf = resp[2];
-//    printf("CANINTF register: 0x%02X\n", canintf);
+//    DEBUG_PRINT("CANINTF register: 0x%02X\n", canintf);
 
     int rx_buf = -1;
     if (canintf & FLAG_RXnIF(0)) {
@@ -145,7 +146,7 @@ bool can_receive(can_frame_t* frame) {
     }
 
     if (rx_buf >= 0) {
-        printf("Receiving from RX buffer %d\n", rx_buf);
+        DEBUG_PRINT("Receiving from RX buffer %d\n", rx_buf);
     }
 
     uint8_t read_cmd = (rx_buf == 0) ? 0x90 : 0x94;
@@ -157,11 +158,11 @@ bool can_receive(can_frame_t* frame) {
     spi_read_blocking(SPI_PORT, 0x00, buf, 13);
     cs_deselect();
 
-    printf("Raw RX buffer data:");
+    DEBUG_PRINT("Raw RX buffer data:");
     for (int i = 0; i < 13; i++) {
-        printf(" %02X", buf[i]);
+        DEBUG_PRINT(" %02X", buf[i]);
     }
-    printf("\n");
+    DEBUG_PRINT("\n");
 
     frame->id = ((uint32_t)buf[0] << 3) | (buf[1] >> 5);
     frame->dlc = buf[4] & 0x0F;
@@ -169,11 +170,11 @@ bool can_receive(can_frame_t* frame) {
         frame->data[i] = buf[5 + i];
     }
 
-    printf("Received CAN Frame: ID=0x%lX DLC=%d Data:", frame->id, frame->dlc);
+    DEBUG_PRINT("Received CAN Frame: ID=0x%lX DLC=%d Data:", frame->id, frame->dlc);
     for (int i = 0; i < frame->dlc; i++) {
-        printf(" %02X", frame->data[i]);
+        DEBUG_PRINT(" %02X", frame->data[i]);
     }
-    printf("\n");
+    DEBUG_PRINT("\n");
 
     // Clear interrupt flag for that RX buffer
     cs_select();
